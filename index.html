@@ -1,0 +1,410 @@
+<!DOCTYPE html> 
+<html lang="en"
+<head>
+ <meta name="viewport" content="width=device-width, initial-scale=2.0">
+<script type="text/javascript">
+// <![CDATA[
+var colours=new Array("#accbff", "#92bbff", "#78aaff", "#649eff", "#4188ff"); // colours for top, right, bottom and left borders and background of bubbles
+var bubbles=100// maximum number of bubbles on screen
+var over_or_under="under"; // set to "over" for bubbles to always be on top, or "under" to allow them to float behind other objects
+
+/****************************
+* JavaScript Bubble Cursor  *
+*(c)2010-13 mf2fm web-design*
+*  http://www.mf2fm.com/rv  *
+* DON'T EDIT BELOW THIS BOX *
+****************************/
+var x=ox=400;
+var y=oy=300;
+var swide=1000;
+var shigh=800;
+var sleft=sdown=0;
+var bubb=new Array();
+var bubbx=new Array();
+var bubby=new Array();
+var bubbs=new Array();
+var sploosh=false;
+
+function addLoadEvent(funky) {
+  var oldonload=window.onload;
+  if (typeof(oldonload)!='function') window.onload=funky;
+  else window.onload=function() {
+    if (oldonload) oldonload();
+    funky();
+  }
+}
+
+addLoadEvent(buble);
+
+function buble() { if (document.getElementById) {
+  var i, rats, div;
+  for (i=0; i<bubbles; i++) {
+    rats=createDiv("3px", "3px");
+    rats.style.visibility="hidden";
+	rats.style.zIndex=(over_or_under=="over")?"1001":"0";
+
+    div=createDiv("auto", "auto");
+    rats.appendChild(div);
+    div=div.style;
+    div.top="1px";
+    div.left="0px";
+    div.bottom="1px";
+    div.right="0px";
+    div.borderLeft="1px solid "+colours[3];
+    div.borderRight="1px solid "+colours[1];
+
+    div=createDiv("auto", "auto");
+    rats.appendChild(div);
+    div=div.style;
+    div.top="0px";
+    div.left="1px";
+    div.right="1px";
+    div.bottom="0px"
+    div.borderTop="1px solid "+colours[0];
+    div.borderBottom="1px solid "+colours[2];
+
+    div=createDiv("auto", "auto");
+    rats.appendChild(div);
+    div=div.style;
+    div.left="1px";
+    div.right="1px";
+    div.bottom="1px";
+    div.top="1px";
+    div.backgroundColor=colours[4];
+    if (navigator.appName=="Microsoft Internet Explorer") div.filter="alpha(opacity=50)";
+    else div.opacity=0.5;
+    document.body.appendChild(rats);
+    bubb[i]=rats.style;
+  }
+  set_scroll();
+  set_width();
+  bubble();
+}}
+
+function bubble() {
+  var c;
+  if (Math.abs(x-ox)>1 || Math.abs(y-oy)>1) {
+    ox=x;
+    oy=y;
+    for (c=0; c<bubbles; c++) if (!bubby[c]) {
+      bubb[c].left=(bubbx[c]=x)+"px";
+      bubb[c].top=(bubby[c]=y-3)+"px";
+      bubb[c].width="3px";
+      bubb[c].height="3px"
+      bubb[c].visibility="visible";
+      bubbs[c]=3;
+      break;
+    }
+  }
+  for (c=0; c<bubbles; c++) if (bubby[c]) update_bubb(c);
+  setTimeout("bubble()", 40);
+}
+
+document.onmousedown=splash;
+document.onmouseup=function(){clearTimeout(sploosh);};
+
+function splash() {
+  ox=-1;
+  oy=-1;
+  sploosh=setTimeout('splash()', 100);
+}
+
+function update_bubb(i) {
+  if (bubby[i]) {
+    bubby[i]-=bubbs[i]/2+i%2;
+    bubbx[i]+=(i%5-2)/5;
+    if (bubby[i]>sdown && bubbx[i]>sleft && bubbx[i]<sleft+swide+bubbs[i]) {
+	  if (Math.random()<bubbs[i]/shigh*2 && bubbs[i]++<8) {
+		bubb[i].width=bubbs[i]+"px";
+		bubb[i].height=bubbs[i]+"px";
+	  }
+      bubb[i].top=bubby[i]+"px";
+      bubb[i].left=bubbx[i]+"px";
+    }
+    else {
+      bubb[i].visibility="hidden";
+      bubby[i]=0;
+      return;
+    }
+  }
+}
+
+document.onmousemove=mouse;
+function mouse(e) {
+  if (e) {
+    y=e.pageY;
+    x=e.pageX;
+  }
+  else {
+    set_scroll();
+    y=event.y+sdown;
+    x=event.x+sleft;
+  }
+}
+
+window.onresize=set_width;
+function set_width() {
+  var sw_min=999999;
+  var sh_min=999999;
+  if (document.documentElement && document.documentElement.clientWidth) {
+    if (document.documentElement.clientWidth>0) sw_min=document.documentElement.clientWidth;
+    if (document.documentElement.clientHeight>0) sh_min=document.documentElement.clientHeight;
+  }
+  if (typeof(self.innerWidth)=='number' && self.innerWidth) {
+    if (self.innerWidth>0 && self.innerWidth<sw_min) sw_min=self.innerWidth;
+    if (self.innerHeight>0 && self.innerHeight<sh_min) sh_min=self.innerHeight;
+  }
+  if (document.body.clientWidth) {
+    if (document.body.clientWidth>0 && document.body.clientWidth<sw_min) sw_min=document.body.clientWidth;
+    if (document.body.clientHeight>0 && document.body.clientHeight<sh_min) sh_min=document.body.clientHeight;
+  }
+  if (sw_min==999999 || sh_min==999999) {
+    sw_min=800;
+    sh_min=600;
+  }
+  swide=sw_min;
+  shigh=sh_min;
+}
+
+window.onscroll=set_scroll;
+function set_scroll() {
+  if (typeof(self.pageYOffset)=='number') {
+    sdown=self.pageYOffset;
+    sleft=self.pageXOffset;
+  }
+  else if (document.body && (document.body.scrollTop || document.body.scrollLeft)) {
+    sdown=document.body.scrollTop;
+    sleft=document.body.scrollLeft;
+  }
+  else if (document.documentElement && (document.documentElement.scrollTop || document.documentElement.scrollLeft)) {
+    sleft=document.documentElement.scrollLeft;
+    sdown=document.documentElement.scrollTop;
+  }
+  else {
+    sdown=0;
+    sleft=0;
+  }
+}
+
+function createDiv(height, width) {
+  var div=document.createElement("div");
+  div.style.position="absolute";
+  div.style.height=height;
+  div.style.width=width;
+  div.style.overflow="hidden";
+  div.style.backgroundColor="transparent";
+  return (div);
+}
+// ]]>
+</script>
+    <meta charset="utf-8">
+    <title>things continue to happen</title>
+    </head>
+  <body>
+ <a href="https://abezuo.github.io/goodsounds/">
+  <img src="https://web.archive.org/web/20020613165718/http://uk.geocities.com:80/colinfleming_uk/back2.gif" alt="back button" width="175">
+  </a>    
+  <br><br>  
+    <center>
+<h1>things continue to happen</h1>
+      <br>
+      <p1>2021</p1>
+      <br>
+      <p2>pj martin brown </p2>
+      <br>
+      <br>
+       <img src="image0.jpeg" alt="album cover" width="350">
+      <br><br><br>
+      <p3> 1. allen mcclelland </p3>
+      <br><br>
+      <audio src="01 Allen McClelland.mp3" controls></audio>
+       <br><br><br>
+      <p3> 2. things continue to happen </p3>
+      <br><br>
+      <audio src="02 Things Continue to Happen.mp3" controls></audio>
+       <br><br><br>
+      <p3> 3. a good dream </p3>
+      <br><br>
+      <audio src="03 A Good Dream.mp3" controls></audio>
+      <br><br><br>
+      <p3> 4. box 53 </p3>
+      <br><br>
+      <audio src="04 Box 53.mp3" controls></audio>
+       <br><br><br>
+      <p3> 5. superwet </p3>
+      <br><br>
+      <audio src="05 Super Wet.mp3" controls></audio>
+       <br><br><br>
+      <p3> 6. butterfly </p3>
+      <br><br>
+      <audio src="06 Butterfly.mp3" controls></audio>
+      <br><br><br>
+      <p3> 7. IMFK (purgatory chasm) </p3>
+      <br><br>
+      <audio src="07 IMFK (Purgatory Chasm).mp3" controls></audio>
+       <br><br><br>
+      <p3> 8. really not asking </p3>
+      <br><br>
+      <audio src="08 Really Not Asking.mp3" controls></audio>
+       <br><br><br>
+      <p3> 9. track 9 (demo) </p3>
+      <br><br>
+      <audio src="09 Track 9.mp3" controls></audio>
+      <br><br><br><br><br><br>
+      
+   
+      <br><br><br><br><br><br>
+      </center>
+  
+    
+			<style>
+        <body style="background-color: #F7F3E9;">
+    body {height: 100vh;}
+        * {cursor: url(http://www.rw-designer.com/cursor-extern.php?id=124205), auto;}
+        * {background-image: url();
+           
+        }  
+        
+/* TEXT HIGHLIHT */
+        ::selection {
+  background: "#ffd833" /* WebKit/Blink Browsers */
+          color: blue
+}
+::-moz-selection {
+  background: "#ffd833"; /* Gecko Browsers */
+         color:orange
+}
+/* FONTS */
+@font-face {
+  font-family: orangekid;
+  src: url(orangekid.woff);
+}
+        @font-face {
+  font-family: joystix;
+  src: url(joystix-monospace.woff);
+}
+        @font-face {
+  font-family: mixo;
+  src: url(vtf_mixo-webfont.woff);
+}
+/* TEXT */    
+        a {
+          font-family: ;
+          font-size: 
+        } 
+a:link {
+  color: white;
+  background-color: transparent;
+  text-decoration: none;
+
+}
+
+a:visited {
+  color: pink;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #BAABDA;
+  background-color: transparent;
+  text-decoration: underline;
+}
+        
+h1 {
+color: #e9d945;
+font-family: joystix;
+font-size: 80;
+margin: 10px 5px 10px 5px;
+  display: inline-block;
+  line-height: 0.9;
+  padding: 20px;
+  text-transform: uppercase;
+  background: url(27021AB8-1563-44DC-BAD7-167FA72D7EB3.JPEG) no-repeat;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-size: cover;
+            background-size: cover;
+  }
+h2 {
+color: #04bfad;
+font-family: arial;
+font-size: 20;  
+  }
+  h3 {
+color: #fd94b3;
+font-family: joystix;
+font-size: 40
+  }
+p1 {
+color: white;
+font-family: joystix;
+font-size: 40;
+  margin: 10px 5px 10px 5px;
+  display: inline-block;
+  line-height: 0.9;
+  padding: 20px;
+  text-transform: uppercase;
+  background: url(27021AB8-1563-44DC-BAD7-167FA72D7EB3.JPEG) no-repeat;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-size: cover;
+            background-size: 500;
+
+        }
+  p2 {
+color:  #98DDCA;
+font-family: orangekid;
+font-size: 30;
+    margin: 10px 5px 10px 5px;
+  display: inline-block;
+  line-height: 0.9;
+  padding: 20px;
+  text-transform: uppercase;
+  background: url(27021AB8-1563-44DC-BAD7-167FA72D7EB3.JPEG) no-repeat;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+    -webkit-background-size: cover;
+            background-size: stretch;
+  }
+      p3 {
+color: #BAABDA;
+font-family: orangekid;
+font-size: 70;
+        margin: 10px 5px 10px 5px;
+  display: inline-block;
+  line-height: 0.9;
+  padding: 20px;
+  text-transform: uppercase;
+  background: url(27021AB8-1563-44DC-BAD7-167FA72D7EB3.JPEG) no-repeat;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+        -webkit-background-size: cover;
+            background-size: fill;
+  } 
+
+        
+/* CLASS */
+        
+audio { cursor: url(http://www.rw-designer.com/cursor-extern.php?id=124205), default; }   
+        
+        
+.clip-text-maybe {
+  
+  /* if we can clip, do it */
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+
+  /* what will show through the text
+      ~ or ~
+     what will be the background of that element */
+  background: url(27021AB8-1563-44DC-BAD7-167FA72D7EB3.JPEG);
+
+  /* fallback text color
+      ~ or ~
+     the actual color of text, so it better work on the background */
+  color: black;
+ 
+}        
+        </style>
+ </body>     
